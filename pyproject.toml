@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "blender-script-dirs-manager"
+version = "0.1.0"
+description = "Manages the loading of add-ons and executing startup scripts in Blender from arbitrary script directories"
+authors = ["Paul Golter <paulgolter.de@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [
+    { include = "manage_script_dirs.py" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.11.2"
+pytest = "^8.3.2"
+ruff = "^0.6.3"
+fake-bpy-module-latest = "^20240831"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
