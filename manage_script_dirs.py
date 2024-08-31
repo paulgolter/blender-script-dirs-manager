@@ -25,6 +25,7 @@ set BLENDER_SCRIPT_DIRS=/studio/blender/scripts:/project1/blender/scripts
 02. Start blender with the script as an argument.
 blender --python <PATH_TO_THIS_SCRIPT>
 """
+
 import importlib
 import inspect
 import logging
@@ -36,10 +37,10 @@ from typing import Iterable
 import addon_utils
 import bpy
 
-SCRIPT_DIR_ITEM_NAME = "_load_script_dirs"
+SCRIPT_DIR_ITEM_NAME = "_script_dirs_manager"
 
 logger = logging.getLogger("script_dirs")
-logging.basicConfig(level=logging.INFO)
+
 
 def get_script_dirs_from_env() -> list[Path]:
     script_paths: list[Path] = []
@@ -49,12 +50,15 @@ def get_script_dirs_from_env() -> list[Path]:
             script_paths.append(path)
     return script_paths
 
+
 def get_blender_prefs_script_dirs() -> bpy.types.bpy_prop_collection:
     return bpy.context.preferences.filepaths.script_directories
+
 
 def disable_addon(module_name: str) -> None:
     logger.info("Disable addon: %s", module_name)
     bpy.ops.preferences.addon_disable(module=module_name)
+
 
 def remove_path_from_sys(path: Path) -> None:
     sys_paths = [Path(p) for p in sys.path]
@@ -65,8 +69,10 @@ def remove_path_from_sys(path: Path) -> None:
     else:
         sys.path.pop(idx)
 
+
 def add_path_to_sys(path: Path) -> None:
-    bpy.utils._sys_path_ensure_append(str(path)) # type: ignore
+    bpy.utils._sys_path_ensure_append(str(path))  # type: ignore
+
 
 def get_script_dir_sys_paths(script_dir: Path) -> list[Path]:
     paths = [
@@ -77,13 +83,16 @@ def get_script_dir_sys_paths(script_dir: Path) -> list[Path]:
     ]
     return paths
 
+
 def add_script_dir_sys_paths(script_dir: Path) -> None:
     for path in get_script_dir_sys_paths(script_dir):
         add_path_to_sys(path)
 
+
 def remove_script_dir_sys_paths(script_dir: Path) -> None:
     for path in get_script_dir_sys_paths(script_dir):
         remove_path_from_sys(path)
+
 
 def enable_addon(module_name: str) -> None:
     enabled, loaded = addon_utils.check(module_name)
@@ -116,7 +125,7 @@ def script_dirs_remove_all_managed_items() -> list[bpy.types.ScriptDirectory]:
     script_dirs = get_blender_prefs_script_dirs()
     items_to_remove = script_dirs_get_all_managed_items()
     for item in items_to_remove:
-        script_dirs.remove(item) # type: ignore
+        script_dirs.remove(item)  # type: ignore
     return items_to_remove
 
 
@@ -124,8 +133,8 @@ def script_dir_enable_addons(script_dir: Path) -> None:
     addon_dir = script_dir / "addons"
     if not addon_dir.exists():
         return
-    for module_name, module_path in bpy.path.module_names(str(addon_dir)): # type: ignore
-        enable_addon(module_name) # type: ignore
+    for module_name, module_path in bpy.path.module_names(str(addon_dir)):  # type: ignore
+        enable_addon(module_name)  # type: ignore
 
 
 def script_dir_exec_startup_scripts(script_dir: Path) -> None:
@@ -141,7 +150,8 @@ def script_dir_exec_startup_scripts(script_dir: Path) -> None:
             logger.warning("No register function found in: %s", python_file)
             continue
 
-        register_callable() # type: ignore
+        register_callable()  # type: ignore
+
 
 def script_dir_is_installed(script_dir: Path) -> bool:
     script_dirs = get_blender_prefs_script_dirs()
@@ -161,8 +171,8 @@ def remove_unlisted_script_dirs(scripts_paths: Iterable[Path]) -> None:
         if dir_path not in scripts_paths:
             items_remove.append(item)
             addons_path = dir_path / "addons"
-            module_data: tuple[str, str] = bpy.path.module_names(str(addons_path)) # type: ignore
-            addon_names = [module_name for module_name, _ in module_data] # type: ignore
+            module_data: tuple[str, str] = bpy.path.module_names(str(addons_path))  # type: ignore
+            addon_names = [module_name for module_name, _ in module_data]  # type: ignore
             addon_names_disable.update(addon_names)
 
     for name in addon_names_disable:
@@ -170,17 +180,17 @@ def remove_unlisted_script_dirs(scripts_paths: Iterable[Path]) -> None:
 
     for item in items_remove:
         dir_path = Path(item.directory)
-        script_dirs.remove(item) # type: ignore
+        script_dirs.remove(item)  # type: ignore
         remove_script_dir_sys_paths(dir_path)
 
     # Remove from sys path
     bpy.ops.extensions.repo_refresh_all()
 
+
 def add_missing_script_dirs(scripts_paths: Iterable[Path]) -> None:
     script_dirs = get_blender_prefs_script_dirs()
     items_new: list[bpy.types.ScriptDirectory] = []
     for dir_path in scripts_paths:
-
         if not dir_path.exists():
             logger.warning("Script dir does not exist: %s", dir_path)
             continue
@@ -191,7 +201,7 @@ def add_missing_script_dirs(scripts_paths: Iterable[Path]) -> None:
             # logger.debug("Script dir already installed: %s", dir_path)
             continue
 
-        item = script_dirs.new() # type: ignore
+        item = script_dirs.new()  # type: ignore
         item.name = SCRIPT_DIR_ITEM_NAME
         item.directory = dir_path.as_posix()
         items_new.append(item)
@@ -210,6 +220,7 @@ def add_missing_script_dirs(scripts_paths: Iterable[Path]) -> None:
 def report_as_error(text: str) -> None:
     def callback(self: bpy.types.Menu, context: bpy.types.Context) -> None:
         self.layout.label(text=text)
+
     bpy.context.window_manager.popup_menu(callback, title="Error", icon="ERROR")
 
 
@@ -226,6 +237,8 @@ def main() -> None:
     script_dirs = get_script_dirs_from_env()
     remove_unlisted_script_dirs(script_dirs)
     add_missing_script_dirs(script_dirs)
+
+    bpy.ops.wm.save_userpref()
 
 
 if __name__ == "__main__":
