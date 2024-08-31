@@ -1,16 +1,15 @@
-"""Manages the loading of add-ons and executing startup scripts in Blender from arbitrary script directories.
+"""Manages the registration of Blender add-ons and the execution of startup scripts from multiple arbitrary script directories.
 
-This script processes the non-blender env variable BLENDER_SCRIPT_DIRS.
-
+This script processes the non-blender env variable `BLENDER_SCRIPT_DIRS`.
 The env variable should contain a list of directories separated by the os.pathsep character.
 
 This script will add all directories in the env variable to the blender script directories in the user preferences.
 
-If the script directory was not already present, it will execute all python files in the startup sub-directory
-
+If the script directory was **not already** present, it will execute all python files in the startup sub-directory
 as well as enable all add-ons in the add-ons sub-directory.
 
-Before adding the provided script directories it will remove all script directories that are not present anymore in the env variable.
+Before adding the provided script directories it will remove all script directories that are still
+in the blender preferences but not in the env variable anymore.
 
 It will also disable all add-ons that were associated with removed script directories.
 
